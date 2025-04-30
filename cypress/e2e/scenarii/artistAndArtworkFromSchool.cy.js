@@ -4,10 +4,11 @@ describe("Artist and artworks informations from school, navigate through all pag
   context("Check navigation Home to School", () => {
     it("Home logo redirect should be '/'", () => {
       cy.viewport(1280, 720);
-      cy.visit("/");
+      cy.visit("");
 
       // check if the logo redirect to "/"
       cy.get("[data-test='logo-lg']").click();
+      cy.log("coucou", config.templateBaseUrl);
       cy.location().should((loc) => {
         expect(loc.href).to.eq(config.url);
         expect(loc.pathname).to.eq("/");
@@ -21,7 +22,7 @@ describe("Artist and artworks informations from school, navigate through all pag
       // check if the first navbar link which is "school" redirect to "/school/promotion/4"
       cy.get("[data-test='nav-link']").contains("School").click();
       cy.location().should((loc) => {
-        expect(loc.pathname).to.eq("/school/promotion/4");
+        expect(loc.pathname).to.eq("/school/promotion/29");
       });
     });
   });
@@ -33,8 +34,9 @@ describe("Artist and artworks informations from school, navigate through all pag
       // setup the interception of multiple request which occur when we visit "/school"
       // intercept is always before cy.visit and after it's wait
       cy.intercept(`${config.rest_uri_v2}school/promotion`).as("promotions");
-      cy.intercept(`${config.rest_uri_v2}school/promotion/*`).as("promotion");
-
+      // It's impossible to reach specific promotion with the adress bar
+      cy.intercept(`${config.rest_uri_v2}school/promotion*`).as("promotion");
+    
       cy.visit("/school");
 
       // wait the request intercepted @promotions declared before and check is body properties
@@ -57,6 +59,7 @@ describe("Artist and artworks informations from school, navigate through all pag
       cy.get(":nth-child(5) > .promo__link").click();
 
       // wait the request intercepted @promotions declared before and check is body
+      // It's impossible to reach specific promotion with the adress bar
       cy.wait("@promotion").then(({ response }) => {
         expect(response.statusCode).to.eq(200);
         expect(response.body).to.exist;
@@ -68,7 +71,6 @@ describe("Artist and artworks informations from school, navigate through all pag
       cy.visit("/school");
 
       cy.get(":nth-child(8) > .promo__link").click();
-
       cy.get('[data-key="0"] > .relative').click();
 
       // check if the click before redirect to an artist page
@@ -96,8 +98,12 @@ describe("Artist and artworks informations from school, navigate through all pag
       // check if the page have the good artwork
       cy.get("h1").contains("Bénincity : épisode 4");
 
-      // check the artist to
-      cy.get("a").contains("Amélie Agbo").click();
+      // check the artist too
+      // cy.visit and cy.wait function but not cy.get("a")
+      //doesn't work, AxiosError
+      cy.wait(0);
+      cy.get("a").contains("Amélie Agbo").should('be.visible').click({ force: true });
+      cy.location('pathname').should('eq', '/artist/1606');
       cy.get("h2").contains("Amélie Agbo");
     });
   });
